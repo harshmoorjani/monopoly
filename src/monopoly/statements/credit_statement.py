@@ -19,6 +19,8 @@ class CreditStatement(BaseStatement):
 
     def post_process_transactions(self, transactions) -> list[Transaction]:
         previous_month_balances = self.get_prev_month_balances()
+        if self.config.only_one_previous_balance:
+            previous_month_balances = [previous_month_balances[0]]
         if previous_month_balances:
             first_transaction_date = next(iter(transactions)).date
             for prev_month_balance in previous_month_balances:
@@ -61,6 +63,8 @@ class CreditStatement(BaseStatement):
 
         amounts = [transaction.amount for transaction in transactions]
         total_amount = abs(round(sum(amounts), 2))
+        if self.config.round_off_final_due:
+            total_amount = total_amount // 1
 
         result = total_amount in numbers
         if not result:

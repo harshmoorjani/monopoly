@@ -13,6 +13,7 @@ class PdfPasswords(BaseSettings):
     citibank_pdf_passwords: list[SecretStr] = [SecretStr("")]
     standard_chartered_pdf_passwords: list[SecretStr] = [SecretStr("")]
     hsbc_pdf_passwords: list[SecretStr] = [SecretStr("")]
+    hdfc_pdf_passwords: list[SecretStr] = [SecretStr("")]
 
     model_config = SettingsConfigDict(env_file=".env", extra="allow")
 
@@ -71,6 +72,9 @@ class StatementConfig:
     statement_date_order: DateOrder = DateOrder("DMY")
     multiline_transactions: bool = False
     has_withdraw_deposit_column: bool = False
+    only_one_previous_balance: bool = False
+    round_off_final_due: bool = False
+    transaction_date_contains_year: bool = False
 
 
 @dataclass(config=ConfigDict(extra="forbid"), kw_only=True)

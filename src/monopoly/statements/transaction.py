@@ -131,7 +131,7 @@ class Transaction:
         """
         Converts transactions with a suffix of "CR" or "+" to positive
         """
-        if self.suffix in ("CR", "+"):
+        if self.suffix and self.suffix.upper() in ("CR", "+"):
             self.amount = abs(self.amount)
 
         else:

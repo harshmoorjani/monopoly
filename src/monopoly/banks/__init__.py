@@ -11,6 +11,7 @@ from .citibank import Citibank
 from .dbs import Dbs
 from .hsbc import Hsbc
 from .maybank import Maybank
+from .hdfc import Hdfc
 from .ocbc import Ocbc
 from .standard_chartered import StandardChartered
 
@@ -20,6 +21,7 @@ banks: list[Type[BankBase]] = [
     ExampleBank,
     Hsbc,
     Maybank,
+    Hdfc,
     Ocbc,
     StandardChartered,
 ]

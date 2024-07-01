@@ -67,6 +67,7 @@ class BankNames(AutoEnum):
     DBS = auto()
     HSBC = auto()
     MAYBANK = auto()
+    HDFC = auto()
     OCBC = auto()
     STANDARD_CHARTERED = auto()
 
@@ -96,10 +97,13 @@ class SharedPatterns(StrEnum):
     """
 
     COMMA_FORMAT = r"\d{1,3}(,\d{3})*\.\d*"
-    ENCLOSED_COMMA_FORMAT = rf"\({COMMA_FORMAT}\s{{0,1}}\))"
+    INDIAN_FORMAT = r"(\d{1,2},)*\d{1,3}\.\d+"
+    ENCLOSED_COMMA_FORMAT = rf"\({COMMA_FORMAT}\s{{0,1}}\)"
+    ENCLOSED_INDIAN_FORMAT = rf"\({INDIAN_FORMAT}\s{{0,1}}\)"
     DEBIT_CREDIT_SUFFIX = r"(?P<suffix>CR\b|DR\b|\+|\-)?\s*"
 
-    AMOUNT = rf"(?P<amount>{COMMA_FORMAT}|{ENCLOSED_COMMA_FORMAT}\s*"
+    AMOUNT = rf"(?P<amount>{COMMA_FORMAT}|{INDIAN_FORMAT}|{ENCLOSED_COMMA_FORMAT}|{ENCLOSED_INDIAN_FORMAT})\s*"
+    AMOUNT_WITHOUT_GROUP = rf"({COMMA_FORMAT}|{INDIAN_FORMAT}|{ENCLOSED_COMMA_FORMAT}|{ENCLOSED_INDIAN_FORMAT})"
     AMOUNT_EXTENDED_WITHOUT_EOL = AMOUNT + DEBIT_CREDIT_SUFFIX
     AMOUNT_EXTENDED = AMOUNT_EXTENDED_WITHOUT_EOL + r"$"
 
@@ -128,6 +132,11 @@ class StatementBalancePatterns(StrEnum):
     MAYBANK = (
         r"(?P<description>PREVIOUS STATEMENT BALANCE?)\s+"
         + SharedPatterns.AMOUNT_EXTENDED_WITHOUT_EOL
+    )
+    HDFC = (
+        r"^(?P<description>)\s+"
+        + SharedPatterns.AMOUNT_EXTENDED_WITHOUT_EOL
+        + rf"(\s+{SharedPatterns.AMOUNT_WITHOUT_GROUP}){{4}}$"
     )
     OCBC = (
         r"(?P<description>LAST MONTH'S BALANCE?)\s+"
@@ -162,6 +171,12 @@ class CreditTransactionPatterns(StrEnum):
         + SharedPatterns.DESCRIPTION
         + SharedPatterns.AMOUNT_EXTENDED
     )
+    HDFC = (
+        rf"^\s*(?P<transaction_date>{DateRegexPatterns.dd_mm_yyyy})\s+"
+        + r"(\d{2}:\d{2}:\d{2}\s+)?(?P<description>.+?)\s+"
+        + r"(?P<points>(-? ?\d+)?)\s+"
+        + SharedPatterns.AMOUNT_EXTENDED
+    )
     OCBC = (
         r"(?P<transaction_date>\d+/\d+)\s+"
         + SharedPatterns.DESCRIPTION
@@ -184,6 +199,14 @@ class DebitTransactionPatterns(StrEnum):
         + SharedPatterns.BALANCE
     )
     MAYBANK = (
+        rf"(?P<transaction_date>{DateRegexPatterns.dd_mm_yy})\s+"
+        + SharedPatterns.DESCRIPTION
+        # remove *\s
+        + SharedPatterns.AMOUNT[:-3]
+        + r"(?P<suffix>\-|\+)\s+"
+        + SharedPatterns.BALANCE
+    )
+    HDFC = (
         rf"(?P<transaction_date>{DateRegexPatterns.dd_mm_yy})\s+"
         + SharedPatterns.DESCRIPTION
         # remove *\s
