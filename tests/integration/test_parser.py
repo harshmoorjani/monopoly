@@ -1,8 +1,12 @@
 from pathlib import Path
+from typing import Type
 
+import pytest
 from pydantic import SecretStr
 from pytest import raises
 
+from monopoly.banks import BankBase
+from monopoly.config import PdfConfig
 from monopoly.pdf import (
     BadPasswordFormatError,
     MissingPasswordError,
@@ -11,6 +15,15 @@ from monopoly.pdf import (
 )
 
 fixture_directory = Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture(scope="function")
+def mock_bank():
+    class MockBank:
+        pdf_config = PdfConfig()
+        passwords = None
+
+    return MockBank()
 
 
 def test_can_open_file_stream(parser: PdfParser):
@@ -35,20 +48,20 @@ def test_wrong_password_raises_error(parser: PdfParser):
         parser.open()
 
 
-def test_get_pages(parser: PdfParser):
+def test_get_pages(parser: PdfParser, mock_bank: Type[BankBase]):
     parser.file_path = fixture_directory / "4_pages_blank.pdf"
     parser.page_range = slice(0, -1)
 
-    pages = parser.get_pages()
+    pages = parser.get_pages(mock_bank)
     assert len(pages) == 3
 
 
-def test_get_pages_invalid_returns_error(parser: PdfParser):
+def test_get_pages_invalid_returns_error(parser: PdfParser, mock_bank: Type[BankBase]):
     parser.file_path = fixture_directory / "4_pages_blank.pdf"
     parser.page_range = slice(99, -99)
 
     with raises(ValueError, match="bad page number"):
-        parser.get_pages()
+        parser.get_pages(mock_bank)
 
 
 def test_override_password(parser: PdfParser):
